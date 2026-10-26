@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Why binary search is fast</title>
+<style>
+:root{--bg:#eef0f6;--ink:#17192b;--muted:#5a5f7a;--cell:#d5d9ea;--seen:#a9b0d1;--out:#e7e9f2;--cur:#e08a1e;--hit:#1d8a5b;--panel:#f9faff;--rule:#cdd1e4;--target:#a3321f;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1120;--ink:#e6e8f6;--muted:#9aa0c0;--cell:#2a2f4d;--seen:#4a5282;--out:#171a30;--cur:#f0a23c;--hit:#4fd098;--panel:#171a30;--rule:#2b3050;--target:#ff7a62;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1120;--ink:#e6e8f6;--muted:#9aa0c0;--cell:#2a2f4d;--seen:#4a5282;--out:#171a30;--cur:#f0a23c;--hit:#4fd098;--panel:#171a30;--rule:#2b3050;--target:#ff7a62;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+h1{font:600 clamp(26px,6vw,38px)/1.15 "Iowan Old Style",Georgia,serif;margin:8px 0 10px;letter-spacing:-.01em}
+h2{font-size:16px;margin:0 0 8px}
+p{margin:0 0 12px;max-width:62ch;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:12px;margin:14px 0}
+.controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end;margin:14px 0}
+label{display:flex;flex-direction:column;font-size:14px;color:var(--muted);gap:4px}
+select,input[type=range]{font:inherit;color:var(--ink)}
+select{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:6px 8px}
+button{font:inherit;font-weight:600;border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:6px;padding:8px 14px;cursor:pointer}
+button.alt{background:transparent;color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible,.c:focus-visible{outline:3px solid var(--cur);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(16px,1fr));gap:3px;margin:8px 0}
+.c{height:24px;border-radius:3px;background:var(--cell);border:0;padding:0}
+.c.seen{background:var(--seen)}
+.c.out{background:var(--out)}
+.c.cur{background:var(--cur)}
+.c.hit{background:var(--hit)}
+.c.tgt{box-shadow:0 0 0 2px var(--target)}
+.count{font-weight:600}
+.legend{font-size:14px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>Why is binary search so much faster than looking one by one?</h1>
+<p>Both searchers look for the same number in a sorted list. One walks from the start. The other opens the list in the middle and throws away the half that can’t contain the answer. Tap any square to choose what to find, then press Run.</p>
+
+<div class="controls">
+  <label>List size
+    <select id="size"><option>16</option><option selected>64</option><option>128</option></select>
+  </label>
+  <button id="run">Run</button>
+  <button id="step" class="alt">One step</button>
+  <button id="rand" class="alt">Random target</button>
+</div>
+
+<div class="panel">
+  <h2>Scan from the start</h2>
+  <div id="g1" class="grid"></div>
+  <div class="count" id="c1" aria-live="polite"></div>
+</div>
+<div class="panel">
+  <h2>Binary search</h2>
+  <div id="g2" class="grid"></div>
+  <div class="count" id="c2" aria-live="polite"></div>
+  <p class="legend" style="margin:8px 0 0">Orange is the square being checked, darker squares were checked, pale squares were ruled out without looking, green is the find, and the red ring marks the target.</p>
+</div>
+
+<div class="panel">
+  <h2>What happens when the list gets huge</h2>
+  <label>List size: <span id="nlab"></span>
+    <input id="exp" type="range" min="1" max="12" value="6">
+  </label>
+  <table>
+    <tr><th></th><th>Scan, worst case</th><th>Binary search</th></tr>
+    <tr><td>Checks needed</td><td id="tw"></td><td id="tb"></td></tr>
+  </table>
+  <p style="margin-top:10px">Doubling the list adds only one more check for binary search, because each check halves what’s left. That’s the whole trick: arrange the data so one look rules out half of it.</p>
+</div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let n,target,s,b,timer;
+function make(g,key){
+  $(g).innerHTML='';
+  for(let i=0;i<n;i++){const e=document.createElement('button');e.className='c';e.setAttribute('aria-label','Number '+i);e.dataset.i=i;e.onclick=()=>{target=i;reset()};$(g).appendChild(e)}
+}
+function cells(g){return $(g).children}
+function reset(){
+  clearInterval(timer);
+  s={i:0,done:false,checks:0};b={lo:0,hi:n-1,done:false,checks:0};
+  for(const g of['g1','g2'])for(const e of cells(g))e.className='c'+(+e.dataset.i===target?' tgt':'');
+  show();
+}
+function show(){
+  $('c1').textContent=s.checks+' checks'+(s.done?' — found '+target:'');
+  $('c2').textContent=b.checks+' checks'+(b.done?' — found '+target:'');
+}
+function paint(g,i,cls){const e=cells(g)[i];e.className='c '+cls+(i===target?' tgt':'')}
+function stepOnce(){
+  if(!s.done){
+    const c1=cells('g1');
+    if(s.checks>0&&s.i>0)paint('g1',s.i-1,'seen');
+    s.checks++;
+    if(s.i===target){s.done=true;paint('g1',s.i,'hit')}else{paint('g1',s.i,'cur');s.i++}
+  }
+  if(!b.done){
+    if(b.mid!==undefined&&!b.done)paint('g2',b.mid,'seen');
+    const mid=Math.floor((b.lo+b.hi)/2);b.mid=mid;b.checks++;
+    if(mid===target){b.done=true;paint('g2',mid,'hit')}
+    else{
+      paint('g2',mid,'cur');
+      if(mid<target){for(let i=b.lo;i<mid;i++)paint('g2',i,'out');b.lo=mid+1}
+      else{for(let i=mid+1;i<=b.hi;i++)paint('g2',i,'out');b.hi=mid-1}
+    }
+  }
+  show();
+  return s.done&&b.done;
+}
+function run(){
+  reset();
+  if(reduce){while(!stepOnce());return}
+  timer=setInterval(()=>{if(stepOnce())clearInterval(timer)},110);
+}
+function init(){n=+$('size').value;target=Math.floor(Math.random()*n);make('g1');make('g2');reset()}
+$('size').onchange=init;
+$('run').onclick=run;
+$('step').onclick=()=>{if(s.done&&b.done)reset();stepOnce()};
+$('rand').onclick=()=>{target=Math.floor(Math.random()*n);reset()};
+function huge(){
+  const k=+$('exp').value,N=Math.pow(10,k);
+  $('nlab').textContent=N.toLocaleString('en-US')+' items';
+  $('tw').textContent=N.toLocaleString('en-US');
+  $('tb').textContent=Math.ceil(Math.log2(N+1)).toLocaleString('en-US');
+}
+$('exp').oninput=huge;
+huge();init();
+</script>
+</body>
+</html>
