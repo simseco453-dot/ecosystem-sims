@@ -5,10 +5,10 @@ Small interactive simulations of things that are hard to grasp from text alone. 
 ## Simulations
 
 - **[Network collapse](network-collapse/index.html)**: a plant-pollinator network you can break. Remove species at random or hubs first, and see who goes extinct as a result and how the survivor curves differ.
+- **[Binary search](binary-search/index.html)**: a sorted list searched two ways, scanning one by one and halving each time, with a slider showing how far the gap grows on huge lists.
 
 ## Planned
 
-- Why some algorithms are fast (binary search against scanning)
 - How language drifts over generations
 
 ## Notes
