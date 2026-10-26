@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Can you see a collapse coming?</title>
+<style>
+:root{--bg:#e8ede6;--ink:#1b2a22;--muted:#56665d;--panel:#f6f9f4;--rule:#c6d1c5;--line:#1b2a22;--you:#a3321f;--det:#1f5fa8;--fall:#5b6b62;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101914;--ink:#e3eee6;--muted:#9bb0a2;--panel:#17231c;--rule:#2a3a2f;--line:#e3eee6;--you:#ff8a70;--det:#6fb2ff;--fall:#8da096;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101914;--ink:#e3eee6;--muted:#9bb0a2;--panel:#17231c;--rule:#2a3a2f;--line:#e3eee6;--you:#ff8a70;--det:#6fb2ff;--fall:#8da096;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+h1{font:600 clamp(26px,6vw,38px)/1.15 "Iowan Old Style",Georgia,serif;margin:8px 0 10px;letter-spacing:-.01em}
+h2{font-size:16px;margin:0 0 6px}
+p{margin:0 0 12px;max-width:62ch;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:12px;margin:14px 0}
+.controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end;margin:14px 0}
+label{display:flex;flex-direction:column;font-size:14px;color:var(--muted);gap:4px}
+select,input[type=range]{font:inherit;color:var(--ink)}
+select{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:6px 8px}
+button{font:inherit;font-weight:600;border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:6px;padding:8px 14px;cursor:pointer}
+button.alt{background:transparent;color:var(--ink)}
+button.call{background:var(--you);border-color:var(--you);color:#fff}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--det);outline-offset:2px}
+canvas{display:block;width:100%}
+.key{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin-top:6px}
+.sw{display:inline-block;width:14px;height:3px;margin-right:5px;vertical-align:middle}
+#result{font-weight:600;margin:8px 0 0;white-space:pre-line}
+</style>
+</head>
+<body>
+<main>
+<h1>Can you see a collapse coming?</h1>
+<p>This is a lake, a reef or a fishery, seen through one number measured over time. Conditions are changing slowly. Press Play, and press the red button the moment you think it’s about to collapse. A simple statistic watches the same readings and raises its own alarm. Who’s earlier?</p>
+
+<div class="controls">
+  <label>Type of collapse
+    <select id="mode">
+      <option value="fold">Slow squeeze: conditions pass a threshold</option>
+      <option value="rate">Sudden shift: conditions change too fast</option>
+    </select>
+  </label>
+  <label>Measurement noise
+    <input id="sig" type="range" min="3" max="12" value="5">
+  </label>
+</div>
+<div class="controls">
+  <button id="play">Play</button>
+  <button id="call" class="call" disabled>I think it’s about to collapse</button>
+  <button id="skip" class="alt">Skip to end</button>
+  <button id="again" class="alt">New run</button>
+</div>
+
+<div class="panel">
+  <h2>The reading</h2>
+  <canvas id="ts" height="230" role="img" aria-label="Reading over time"></canvas>
+  <h2 style="margin-top:12px">Variance compared with normal</h2>
+  <canvas id="vr" height="130" role="img" aria-label="Rolling variance compared with its early baseline"></canvas>
+  <div class="key">
+    <span><i class="sw" style="background:var(--you)"></i>Your call</span>
+    <span><i class="sw" style="background:var(--det)"></i>Statistical alarm</span>
+    <span><i class="sw" style="background:var(--fall)"></i>Collapse</span>
+  </div>
+  <div id="result" aria-live="polite"></div>
+</div>
+
+<div class="panel">
+  <h2>What to notice</h2>
+  <p>In a slow squeeze, the system recovers from small knocks more and more slowly as it nears the threshold, so its readings drift further from their average and the variance climbs. That’s the early warning. In a sudden shift, the system never gets weaker: conditions simply change faster than it can follow, and the variance gives no warning until the collapse is already under way. The statistic can also be early, late or wrong in a single noisy run, so run each type several times.</p>
+</div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const N=2000,dt=.05,W=200,START=700,MULT=2,SUST=40;
+let S,p,called,timer;
+function rngf(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){return Math.sqrt(-2*Math.log(1-r()))*Math.cos(6.2831853*r())}
+function simulate(mode,sig,seed){
+  const r=rngf(seed),y=[],lo=mode==='fold'?-1.2:-1.5,hi=mode==='fold'?1.4:4;
+  let x=mode==='fold'?1:-1,tc=null,end=N;
+  for(let i=0;i<N;i++){
+    let lam=0;
+    if(mode==='fold'){x+=(x-x**3+(.4-i/N))*dt+sig*Math.sqrt(dt)*gauss(r);y.push(x);if(tc===null&&x<0)tc=i}
+    else{const k=i-1000;lam=k>0?Math.min(1.5*k*dt,4.5):0;x+=((x+lam)**2-1)*dt+sig*Math.sqrt(dt)*gauss(r);x=Math.min(x,4-lam);y.push(x+lam);if(tc===null&&x+lam>1)tc=i}
+    if(tc!==null&&i>=tc+40){end=i+1;break}
+  }
+  const v=Array(y.length).fill(null);
+  for(let i=W;i<y.length;i++){
+    let sx=0,sy=0,sxx=0,sxy=0;
+    for(let k=0;k<W;k++){const val=y[i-W+k];sx+=k;sy+=val;sxx+=k*k;sxy+=k*val}
+    const b=(W*sxy-sx*sy)/(W*sxx-sx*sx),a=(sy-b*sx)/W;let ss=0;
+    for(let k=0;k<W;k++){const e=y[i-W+k]-(a+b*k);ss+=e*e}
+    v[i]=ss/W;
+  }
+  let base=0,c=0;for(let i=250;i<START;i++){base+=v[i];c++}base/=c;
+  const ratio=v.map(q=>q===null?null:q/base);
+  let alarm=null,cnt=0;
+  for(let i=START;i<y.length&&alarm===null;i++){cnt=ratio[i]>MULT?cnt+1:0;if(cnt>=SUST)alarm=i}
+  return{y,ratio,tc,alarm,lo,hi,n:y.length,mode};
+}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function fit(cv,h){const d=devicePixelRatio||1,w=cv.clientWidth;cv.width=w*d;cv.height=h*d;const x=cv.getContext('2d');x.setTransform(d,0,0,d,0,0);return{x,w,h}}
+function frame(x,w,h,m,yl,yh,ticks){
+  x.font='12px system-ui,sans-serif';x.fillStyle=css('--muted');x.strokeStyle=css('--rule');x.lineWidth=1;x.textAlign='right';
+  for(const t of ticks){const yy=m.t+(h-m.t-m.b)*(1-(t-yl)/(yh-yl));x.beginPath();x.moveTo(m.l,yy);x.lineTo(w-m.r,yy);x.stroke();x.fillText(t,m.l-6,yy+4)}
+}
+function marks(x,m,w,h,px){
+  const mk=(i,col,dash)=>{if(i===null)return;const xx=m.l+(w-m.l-m.r)*i/N;x.strokeStyle=css(col);x.lineWidth=2;x.setLineDash(dash?[5,4]:[]);x.beginPath();x.moveTo(xx,m.t);x.lineTo(xx,h-m.b);x.stroke();x.setLineDash([])};
+  const done=p>=S.n-1;
+  mk(called,'--you');mk(S.alarm!==null&&S.alarm<=p?S.alarm:null,'--det');mk(S.tc!==null&&S.tc<=p?S.tc:null,'--fall',1);
+}
+function draw(){
+  let {x,w,h}=fit($('ts'),230);const m={l:36,r:10,t:8,b:8};
+  x.clearRect(0,0,w,h);frame(x,w,h,m,S.lo,S.hi,S.mode==='fold'?[-1,0,1]:[-1,0,1,2]);
+  x.strokeStyle=css('--line');x.lineWidth=1.6;x.beginPath();
+  for(let i=0;i<=p&&i<S.n;i++){const px=m.l+(w-m.l-m.r)*i/N,py=m.t+(h-m.t-m.b)*(1-(S.y[i]-S.lo)/(S.hi-S.lo));i?x.lineTo(px,py):x.moveTo(px,py)}
+  x.stroke();marks(x,m,w,h);
+  ({x,w,h}=fit($('vr'),130));const m2={l:36,r:10,t:8,b:20},yh=6;
+  x.clearRect(0,0,w,h);frame(x,w,h,m2,0,yh,[0,2,4,6]);
+  x.strokeStyle=css('--det');x.setLineDash([4,4]);const ty=m2.t+(h-m2.t-m2.b)*(1-MULT/yh);x.beginPath();x.moveTo(m2.l,ty);x.lineTo(w-m2.r,ty);x.stroke();x.setLineDash([]);
+  x.strokeStyle=css('--line');x.lineWidth=1.6;x.beginPath();let first=true;
+  for(let i=W;i<=p&&i<S.n;i++){const px=m2.l+(w-m2.l-m2.r)*i/N,py=m2.t+(h-m2.t-m2.b)*(1-Math.min(S.ratio[i],yh)/yh);first?x.moveTo(px,py):x.lineTo(px,py);first=false}
+  x.stroke();marks(x,m2,w,h);
+}
+function result(){
+  const t=i=>(i*dt).toFixed(0),ended=p>=S.n-1;
+  if(!ended){$('result').textContent='';return}
+  const L=[];
+  L.push(S.tc===null?'No collapse this time.':'Collapse at t = '+t(S.tc)+'.');
+  if(called===null)L.push('You never called it.');
+  else if(S.tc!==null&&called<S.tc)L.push('You called it '+((S.tc-called)*dt).toFixed(1)+' time units before collapse.');
+  else L.push('You called it after the collapse had begun.');
+  if(S.alarm===null)L.push('The statistic never raised an alarm.');
+  else if(S.tc!==null&&S.alarm<S.tc)L.push('The statistic alarmed '+((S.tc-S.alarm)*dt).toFixed(1)+' time units before collapse.');
+  else L.push('The statistic alarmed only after the collapse began.');
+  if(S.mode==='rate')L.push('The system was never close to a threshold, so any alarm came only as the collapse itself began: too late to act on.');
+  $('result').textContent=L.join('\n');
+}
+function tick(){
+  p=Math.min(p+8,S.n-1);
+  if(p>=S.n-1){stop()}
+  draw();result();
+}
+function stop(){clearInterval(timer);timer=null;$('play').textContent='Play';$('call').disabled=true}
+$('play').onclick=()=>{
+  if(p>=S.n-1)return;
+  if(timer){stop();return}
+  $('play').textContent='Pause';$('call').disabled=called!==null;timer=setInterval(tick,33);
+};
+$('call').onclick=()=>{if(called===null){called=p;$('call').disabled=true;draw()}};
+$('skip').onclick=()=>{stop();p=S.n-1;draw();result()};
+function fresh(){stop();S=simulate($('mode').value,+$('sig').value/100,(Math.random()*1e9)|0);p=0;called=null;$('result').textContent='';draw()}
+$('again').onclick=fresh;$('mode').onchange=fresh;$('sig').onchange=fresh;
+addEventListener('resize',()=>draw());
+fresh();
+</script>
+</body>
+</html>
