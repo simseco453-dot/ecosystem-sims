@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Sims: small interactive models</title>
+<title>Sims</title>
 <style>
 :root{--bg:#eceae4;--ink:#1d1f1b;--muted:#5d6158;--panel:#f8f7f3;--rule:#d0cdc2;--accent:#2d5d4a;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121411;--ink:#ecebe5;--muted:#a3a799;--panel:#1b1e19;--rule:#2f332b;--accent:#7fcba9;color-scheme:dark}}
@@ -11,66 +11,141 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:760px;margin:0 auto;padding:28px 16px 48px}
-h1{font:600 clamp(30px,7vw,46px)/1.1 "Iowan Old Style",Georgia,serif;margin:6px 0 12px;letter-spacing:-.015em}
-.lede{font-size:18px;max-width:56ch;margin:0 0 8px}
+header{border-bottom:1px solid var(--rule);background:var(--bg);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.bar{max-width:860px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{font:700 22px/1 "Iowan Old Style",Georgia,serif;letter-spacing:-.01em;margin-right:auto;color:var(--ink);text-decoration:none}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;font-weight:600;font-size:15px;padding:6px 10px;border-radius:6px}
+nav a:hover{color:var(--ink)}
+nav a[aria-current="page"]{color:var(--ink);background:var(--panel);box-shadow:inset 0 -2px 0 var(--accent)}
+a:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:6}
+main{max-width:860px;margin:0 auto;padding:28px 16px 56px}
+section[hidden]{display:none}
+h1{font:600 clamp(30px,7vw,46px)/1.1 "Iowan Old Style",Georgia,serif;margin:4px 0 12px;letter-spacing:-.015em}
+h2{font:600 24px/1.2 "Iowan Old Style",Georgia,serif;margin:0 0 12px}
+.lede{font-size:18px;max-width:56ch;color:var(--ink)}
 p{margin:0 0 12px;max-width:62ch;color:var(--muted)}
-.grid{display:grid;gap:14px;margin:24px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.btn{display:inline-block;font-weight:600;text-decoration:none;border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:6px;padding:9px 16px}
+.btn.alt{background:transparent;color:var(--ink)}
+.grid{display:grid;gap:14px;margin:16px 0}
 @media (min-width:640px){.grid{grid-template-columns:1fr 1fr}}
 .card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:16px;text-decoration:none;color:inherit}
 .card:hover{border-color:var(--accent)}
 .card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.card h2{font:600 20px/1.25 "Iowan Old Style",Georgia,serif;margin:0 0 6px}
-.card p{margin:0 0 10px;color:var(--muted);font-size:15px}
-.go{margin-top:auto;font-weight:600;color:var(--accent);font-size:15px}
-.status{font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:8px;margin:0 0 10px}
-h3{font-size:15px;margin:28px 0 8px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-ul{margin:0;padding-left:20px;color:var(--muted);max-width:62ch}
-li{margin-bottom:6px}
+.card h3{font:600 19px/1.25 "Iowan Old Style",Georgia,serif;margin:0 0 6px}
+.card p{margin:0 0 10px;font-size:15px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tag{font-size:12px;border:1px solid var(--rule);border-radius:999px;padding:1px 9px;color:var(--muted)}
+.status{font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:8px;margin:auto 0 0}
+.filter{display:flex;gap:10px;align-items:center;margin:6px 0 4px;font-size:14px;color:var(--muted)}
+select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:5px 8px}
+.log{list-style:none;padding:0;margin:0;max-width:62ch}
+.log li{border-left:2px solid var(--rule);padding:0 0 18px 14px;margin-left:4px}
+.log b{display:block;color:var(--ink)}
+.log span{color:var(--muted);font-size:14px}
+.empty{background:var(--panel);border:1px dashed var(--rule);border-radius:10px;padding:14px;color:var(--muted);max-width:62ch}
 a.plain{color:var(--accent)}
+footer{max-width:860px;margin:0 auto;padding:0 16px 32px;color:var(--muted);font-size:14px}
 </style>
 </head>
 <body>
+<header>
+  <div class="bar">
+    <a class="brand" href="#home">Sims</a>
+    <nav aria-label="Main">
+      <a href="#home" data-nav="home">Home</a>
+      <a href="#projects" data-nav="projects">Projects</a>
+      <a href="#research" data-nav="research">Research</a>
+      <a href="#log" data-nav="log">Log</a>
+      <a href="#contact" data-nav="contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
 <main>
-<h1>Small models you can break</h1>
-<p class="lede">Four interactive simulations of things that are hard to grasp from text: how networks fall apart, why some searches are fast, how languages split, and whether a collapse can be seen coming. Each page is self-contained. Open it, change something, watch what happens.</p>
+<section id="home" hidden>
+  <h1>A workshop for building and testing ideas</h1>
+  <p class="lede">Projects get built here, checked against evidence where it exists, and published with an honest note about what has and hasn’t been verified.</p>
+  <div class="row">
+    <a class="btn" href="#projects">See projects</a>
+    <a class="btn alt" href="#research">Research library</a>
+  </div>
+  <h2 style="margin-top:32px">Latest</h2>
+  <div class="grid" id="latest"></div>
+</section>
 
-<div class="grid">
-  <a class="card" href="network-collapse/">
-    <h2>Network collapse</h2>
-    <p>A plant-pollinator network. Remove species at random or hubs first and see who goes extinct as a result.</p>
-    <div class="status">Status: built. Not yet tested in a browser. Sources not yet added.</div>
-    <span class="go">Open →</span>
-  </a>
-  <a class="card" href="binary-search/">
-    <h2>Binary search</h2>
-    <p>Scan a sorted list one by one, or halve it each time, and see how far apart the two get on huge lists.</p>
-    <div class="status">Status: built. Not yet tested in a browser.</div>
-    <span class="go">Open →</span>
-  </a>
-  <a class="card" href="language-drift/">
-    <h2>Language drift</h2>
-    <p>A town starts with one word. Watch dialects form when people only talk to neighbours, and vanish when everyone mixes.</p>
-    <div class="status">Status: built. Not yet tested in a browser. Sources not yet added.</div>
-    <span class="go">Open →</span>
-  </a>
-  <a class="card" href="early-warning/">
-    <h2>Early warning</h2>
-    <p>Call a collapse from a noisy reading and compare your call with a variance alarm, including a collapse that gives no warning.</p>
-    <div class="status">Status: built. Simulation logic run in Node; page not yet tested in a browser. Sources not yet added.</div>
-    <span class="go">Open →</span>
-  </a>
-</div>
+<section id="projects" hidden>
+  <h2>Projects</h2>
+  <div class="filter"><label for="tagsel">Show</label>
+    <select id="tagsel"><option value="">All projects</option></select></div>
+  <div class="grid" id="all"></div>
+</section>
 
-<h3>What these are, and aren’t</h3>
-<ul>
-  <li>They are deliberately simple models meant to build intuition. They are not predictions about any real lake, reef, language or network.</li>
-  <li>The statuses above say only what has actually been checked. “Not yet tested in a browser” means exactly that.</li>
-  <li>Next on the list: a “Sources and assumptions” section on each page, using published papers, and browser tests that run automatically.</li>
-</ul>
+<section id="research" hidden>
+  <h2>Research</h2>
+  <p>Papers and sources behind each project, with what each one supports and where it doesn’t apply.</p>
+  <div id="papers"></div>
+</section>
 
-<h3>Source</h3>
-<p>The code is in the <a class="plain" href="https://github.com/simseco453-dot/ecosystem-sims">repository</a>. Each simulation lives in its own folder.</p>
+<section id="log" hidden>
+  <h2>Log</h2>
+  <ul class="log" id="loglist"></ul>
+</section>
+
+<section id="contact" hidden>
+  <h2>Contact</h2>
+  <p>The code and issue tracker are on GitHub. Questions, corrections and ideas are welcome there.</p>
+  <div class="row"><a class="btn" href="https://github.com/simseco453-dot/ecosystem-sims/issues">Open an issue</a>
+  <a class="btn alt" href="https://github.com/simseco453-dot/ecosystem-sims">View the code</a></div>
+</section>
 </main>
+<footer>Models on this site are illustrative unless a project says otherwise. Status lines describe only checks that have actually been run.</footer>
+
+<script>
+/* To add a project: add one object to PROJECTS. To add a paper: add one to PAPERS. To add a log entry: add one to LOG. */
+const PROJECTS=[
+ {title:"Early warning",path:"early-warning/",tags:["Complex systems"],summary:"Call a collapse from a noisy reading and compare your call with a variance alarm, including a collapse that gives no warning.",status:"Built. Simulation logic run in Node; page not yet tested in a browser."},
+ {title:"Language drift",path:"language-drift/",tags:["Language","Complex systems"],summary:"A town starts with one word. Watch dialects form when people only talk to neighbours, and vanish when everyone mixes.",status:"Built. Not yet tested in a browser."},
+ {title:"Binary search",path:"binary-search/",tags:["Algorithms"],summary:"Scan a sorted list one by one, or halve it each time, and see how far apart the two get on huge lists.",status:"Built. Not yet tested in a browser."},
+ {title:"Network collapse",path:"network-collapse/",tags:["Complex systems","Ecology"],summary:"A plant-pollinator network. Remove species at random or hubs first and see who goes extinct as a result.",status:"Built. Not yet tested in a browser."}
+];
+const PAPERS=[]; /* {title, authors, year, link, project, supports, limits} */
+const LOG=[
+ {date:"2026-10-27",title:"Site restructured",text:"Landing page turned into a general site with Projects, Research, Log and Contact sections."},
+ {date:"2026-10-27",title:"Early warning published",text:"Slow-squeeze and rate-induced collapse, with a variance alarm."},
+ {date:"2026-10-27",title:"Language drift published",text:"Dialect formation under different levels of mixing."},
+ {date:"2026-10-27",title:"Binary search published",text:"Side-by-side scan and halving search."},
+ {date:"2026-10-27",title:"Network collapse published",text:"Plant-pollinator network with random and hub-first removal."}
+];
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function card(p){return `<a class="card" href="${p.path}"><h3>${esc(p.title)}</h3><div class="tags">${p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div><p>${esc(p.summary)}</p><div class="status">${esc(p.status)}</div></a>`}
+function renderProjects(){
+  const t=$('tagsel').value;
+  $('all').innerHTML=PROJECTS.filter(p=>!t||p.tags.includes(t)).map(card).join('');
+}
+function init(){
+  const tags=[...new Set(PROJECTS.flatMap(p=>p.tags))].sort();
+  $('tagsel').innerHTML='<option value="">All projects</option>'+tags.map(t=>`<option>${esc(t)}</option>`).join('');
+  $('tagsel').onchange=renderProjects;
+  $('latest').innerHTML=PROJECTS.slice(0,2).map(card).join('');
+  renderProjects();
+  $('papers').innerHTML=PAPERS.length?PAPERS.map(p=>`<div class="card" style="margin-bottom:12px"><h3>${esc(p.title)}</h3><p>${esc(p.authors)} · ${esc(String(p.year))}</p><p>Used in: ${esc(p.project)}. Supports: ${esc(p.supports)}. Limits: ${esc(p.limits)}</p><a class="plain" href="${p.link}">Source</a></div>`).join(''):'<div class="empty">No sources have been added yet. Each entry will name the paper, which project uses it, what it supports, and where it doesn’t apply.</div>';
+  $('loglist').innerHTML=LOG.map(l=>`<li><span>${esc(l.date)}</span><b>${esc(l.title)}</b>${esc(l.text)}</li>`).join('');
+  route();
+}
+function route(){
+  const ids=['home','projects','research','log','contact'];
+  let h=(location.hash||'#home').slice(1);if(!ids.includes(h))h='home';
+  ids.forEach(id=>{$(id).hidden=id!==h});
+  document.querySelectorAll('nav a').forEach(a=>{a.toggleAttribute('aria-current',a.dataset.nav===h);if(a.dataset.nav===h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  document.title=(h==='home'?'':h[0].toUpperCase()+h.slice(1)+' · ')+'Sims';
+  scrollTo(0,0);
+}
+addEventListener('hashchange',route);
+init();
+</script>
 </body>
 </html>
