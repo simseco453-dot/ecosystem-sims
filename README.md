@@ -1,5 +1,7 @@
 # ecosystem-sims
 
+Landing page: https://simseco453-dot.github.io/ecosystem-sims/
+
 Small interactive simulations of things that are hard to grasp from text alone. Each one is a single self-contained HTML page: open it in a browser, no install needed.
 
 ## Simulations
