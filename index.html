@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sims: small interactive models</title>
+<style>
+:root{--bg:#eceae4;--ink:#1d1f1b;--muted:#5d6158;--panel:#f8f7f3;--rule:#d0cdc2;--accent:#2d5d4a;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121411;--ink:#ecebe5;--muted:#a3a799;--panel:#1b1e19;--rule:#2f332b;--accent:#7fcba9;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121411;--ink:#ecebe5;--muted:#a3a799;--panel:#1b1e19;--rule:#2f332b;--accent:#7fcba9;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:28px 16px 48px}
+h1{font:600 clamp(30px,7vw,46px)/1.1 "Iowan Old Style",Georgia,serif;margin:6px 0 12px;letter-spacing:-.015em}
+.lede{font-size:18px;max-width:56ch;margin:0 0 8px}
+p{margin:0 0 12px;max-width:62ch;color:var(--muted)}
+.grid{display:grid;gap:14px;margin:24px 0}
+@media (min-width:640px){.grid{grid-template-columns:1fr 1fr}}
+.card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:16px;text-decoration:none;color:inherit}
+.card:hover{border-color:var(--accent)}
+.card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card h2{font:600 20px/1.25 "Iowan Old Style",Georgia,serif;margin:0 0 6px}
+.card p{margin:0 0 10px;color:var(--muted);font-size:15px}
+.go{margin-top:auto;font-weight:600;color:var(--accent);font-size:15px}
+.status{font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:8px;margin:0 0 10px}
+h3{font-size:15px;margin:28px 0 8px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+ul{margin:0;padding-left:20px;color:var(--muted);max-width:62ch}
+li{margin-bottom:6px}
+a.plain{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<h1>Small models you can break</h1>
+<p class="lede">Four interactive simulations of things that are hard to grasp from text: how networks fall apart, why some searches are fast, how languages split, and whether a collapse can be seen coming. Each page is self-contained. Open it, change something, watch what happens.</p>
+
+<div class="grid">
+  <a class="card" href="network-collapse/">
+    <h2>Network collapse</h2>
+    <p>A plant-pollinator network. Remove species at random or hubs first and see who goes extinct as a result.</p>
+    <div class="status">Status: built. Not yet tested in a browser. Sources not yet added.</div>
+    <span class="go">Open →</span>
+  </a>
+  <a class="card" href="binary-search/">
+    <h2>Binary search</h2>
+    <p>Scan a sorted list one by one, or halve it each time, and see how far apart the two get on huge lists.</p>
+    <div class="status">Status: built. Not yet tested in a browser.</div>
+    <span class="go">Open →</span>
+  </a>
+  <a class="card" href="language-drift/">
+    <h2>Language drift</h2>
+    <p>A town starts with one word. Watch dialects form when people only talk to neighbours, and vanish when everyone mixes.</p>
+    <div class="status">Status: built. Not yet tested in a browser. Sources not yet added.</div>
+    <span class="go">Open →</span>
+  </a>
+  <a class="card" href="early-warning/">
+    <h2>Early warning</h2>
+    <p>Call a collapse from a noisy reading and compare your call with a variance alarm, including a collapse that gives no warning.</p>
+    <div class="status">Status: built. Simulation logic run in Node; page not yet tested in a browser. Sources not yet added.</div>
+    <span class="go">Open →</span>
+  </a>
+</div>
+
+<h3>What these are, and aren’t</h3>
+<ul>
+  <li>They are deliberately simple models meant to build intuition. They are not predictions about any real lake, reef, language or network.</li>
+  <li>The statuses above say only what has actually been checked. “Not yet tested in a browser” means exactly that.</li>
+  <li>Next on the list: a “Sources and assumptions” section on each page, using published papers, and browser tests that run automatically.</li>
+</ul>
+
+<h3>Source</h3>
+<p>The code is in the <a class="plain" href="https://github.com/simseco453-dot/ecosystem-sims">repository</a>. Each simulation lives in its own folder.</p>
+</main>
+</body>
+</html>
